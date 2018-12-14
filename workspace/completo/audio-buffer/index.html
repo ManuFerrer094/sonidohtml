@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>AudioBuffer example</title>
+  </head>
+  <body>
+    <h1>AudioBuffer example</h1>
+    <button>Make white noise</button>
+    <canvas id="lienzo" width=512px height=256px></canvas>
+    <pre></pre>
+  </body>
+<script>
+var lienzo = document.getElementById("lienzo").getContext("2d")
+lienzo.fillStyle = "black"
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+var button = document.querySelector('button');
+
+var channels = 2;
+var frameCount = audioCtx.sampleRate * 2.0;
+var myArrayBuffer = audioCtx.createBuffer(channels, frameCount, audioCtx.sampleRate);
+
+function getData() {
+  source = audioCtx.createBufferSource();
+  request = new XMLHttpRequest();
+  request.open('GET', 'viper.ogg', true);
+  request.responseType = 'arraybuffer';
+  request.onload = function() {
+    var audioData = request.response;
+    audioCtx.decodeAudioData(audioData, function(buffer) {
+        myArrayBuffer = buffer;     
+      },
+      function(e){});
+  }
+  request.send();
+}
+
+getData();
+
+button.onclick = function() {
+  for (var channel = 0; channel < channels; channel++) {
+   var nowBuffering = myArrayBuffer.getChannelData(channel);
+   var delay1 = myArrayBuffer.getChannelData(channel);
+   console.log(nowBuffering)
+   for (var i = 0; i < frameCount*40; i++) {
+     //nowBuffering[i] += (Math.random() * 2 - 1)/10;
+     //nowBuffering[i] = nowBuffering[i] + delay1[i+100000];
+     if(i%100 == 0){
+     lienzo.fillRect(i/100,128-(nowBuffering[i]*128),1,1)
+     }
+   }
+   console.log(nowBuffering)
+  }
+  var source = audioCtx.createBufferSource();
+  source.buffer = myArrayBuffer;
+  source.connect(audioCtx.destination);
+  source.start();
+}
+  </script>
+</html>
